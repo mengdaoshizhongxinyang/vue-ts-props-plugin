@@ -1,0 +1,20 @@
+{
+  "name": "vue-ts-props-plugin",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build-core":"node ./scripts/build-core.js",
+    "serve-vite": "node ./scripts/dev-vite.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "typescript": "^5.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.1.7",
+    "vue": "^3.3.2"
+  }
+}

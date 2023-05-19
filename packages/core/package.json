@@ -1,0 +1,16 @@
+{
+  "name": "@vue-ts-props-plugin/core",
+  "version": "0.0.1",
+  "description": "",
+  "main": "./dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
+  "scripts": {
+    "build":"pnpm run build:cjs && pnpm run build:esm",
+    "build:cjs": "tsc --module commonjs --outDir ./dist/cjs --declaration false",
+    "build:esm": "tsc --module esnext --outDir ./dist/esm --declaration true --declarationDir ./dist/types"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
