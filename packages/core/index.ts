@@ -86,7 +86,7 @@ export function transform(file: string) {
       case "string":
         return ts.factory.createIdentifier("String")
       case "number":
-        return ts.factory.createIdentifier("String")
+        return ts.factory.createIdentifier("Number")
       case "boolean":
         return ts.factory.createIdentifier("Boolean")
       case "symbol":
