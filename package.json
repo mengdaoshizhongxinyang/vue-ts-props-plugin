@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build-core":"node ./scripts/build-core.js",
+    "test": "vitest",
+    "build-core": "node ./scripts/build-core.js",
     "serve-vite": "node ./scripts/dev-vite.js"
   },
   "keywords": [],
@@ -15,6 +16,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.1.7",
+    "vitest": "^0.31.1",
     "vue": "^3.3.2"
   }
 }

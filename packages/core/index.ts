@@ -128,7 +128,6 @@ export function transform(file: string) {
       return ts.factory.updateArrowFunction(
         component,
         component.modifiers,
-        // ctx,
         component.typeParameters,
         [
           ts.factory.updateParameterDeclaration(
