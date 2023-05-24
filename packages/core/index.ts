@@ -14,6 +14,14 @@ export function transform(file: string) {
 
   function collectType(type: ts.Type): TypeLabel[] {
     switch (type.flags) {
+      case ts.TypeFlags.TypeParameter:
+        return (type.symbol.declarations || []).map(item=>{
+          if(ts.isTypeParameterDeclaration(item) && item.constraint){
+            return collectType(checker.getTypeAtLocation(item.constraint))
+          }else{
+            return []
+          }
+        }).flat(1)
       case ts.TypeFlags.Any:
       case ts.TypeFlags.Unknown:
       case ts.TypeFlags.Void:
