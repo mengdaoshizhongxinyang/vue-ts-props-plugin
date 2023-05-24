@@ -13,7 +13,11 @@ export function transform(file: string) {
   type TypeLabel = 'string' | 'number' | 'null' | 'array' | 'object' | 'boolean' | 'function' | 'symbol'
 
   function collectType(type: ts.Type): TypeLabel[] {
-    switch (type.flags) {
+    let flags=type.flags
+    if(flags&ts.TypeFlags.EnumLiteral){
+      flags^=ts.TypeFlags.EnumLiteral
+    }
+    switch (flags) {
       case ts.TypeFlags.TypeParameter:
         return (type.symbol.declarations || []).map(item=>{
           if(ts.isTypeParameterDeclaration(item) && item.constraint){
@@ -41,7 +45,6 @@ export function transform(file: string) {
         return ['boolean']
       case ts.TypeFlags.Object:
       case ts.TypeFlags.Intersection:
-
         if(checker.isArrayLikeType(type)){
           return ['array']
         }
