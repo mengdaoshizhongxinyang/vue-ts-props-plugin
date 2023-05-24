@@ -187,16 +187,16 @@ export function transform(file: string) {
       const identifier = node.getChildAt(0) as ts.Identifier
       if (ts.isFunctionLike(component) && component.parameters.length) {
         const propsParameter = component.parameters[0]
-
+        const propsIdentifier= propsParameter.getChildAt(0) as ts.Identifier
         const type = checker.getTypeAtLocation(propsParameter)
-        const args = type.getProperties()
+        const properties = type.getProperties()
         const props: ts.ObjectLiteralElementLike[] = []
-        for (const arg of args) {
-          props.push(createPropertyAssignment(arg))
+        for (const property of properties) {
+          props.push(createPropertyAssignment(property))
         }
         const options = ts.factory.createObjectLiteralExpression(
           [ts.factory.createPropertyAssignment(
-            ts.factory.createIdentifier('props'),
+            propsIdentifier,
             ts.factory.createObjectLiteralExpression(props)
           ), ts.factory.createPropertyAssignment(
             ts.factory.createIdentifier('setup'),

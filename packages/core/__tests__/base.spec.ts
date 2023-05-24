@@ -25,4 +25,9 @@ export default defineComponent({ props: { foo: { type: String, required: true } 
     expect(transform(join(__dirname,"./base/any.ts")))
       .toMatch(`props: { foo: { type: null, required: true } }`)
   })
+
+  test("prop is other name ",()=>{
+    expect(transform(join(__dirname,"./base/otherName.ts")))
+      .toMatch(`foo: { foo: { type: String, required: true } }`)
+  })
 })
