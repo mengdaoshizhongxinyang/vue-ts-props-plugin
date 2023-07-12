@@ -17,4 +17,9 @@ describe("complex type",()=>{
     expect(transform(join(__dirname,"./complexType/enum.ts")))
       .toMatch(`props: { foo: { type: [String, Number], required: true } }`)
   })
+
+  test("unionProps type",()=>{
+    expect(transform(join(__dirname,"./complexType/unionProps.ts")))
+      .toMatch(`props: { a: { type: [Number, String], required: true }, b: { type: String, required: false }, c: { type: Number, required: false } }`)
+  })
 })

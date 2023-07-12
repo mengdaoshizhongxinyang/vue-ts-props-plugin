@@ -6,7 +6,7 @@ describe("base",()=>{
     expect(transform(join(__dirname,"./base/base.ts")).replaceAll("\n","").replaceAll(" ",""))
       .toBe(
 `import { defineComponent, h } from "vue";
-export default defineComponent({ props: { foo: { type: String, required: true } }, setup: (props) => {
+export default defineComponent({ props: { foo: { type: String, required: true } } as any, setup: (props: { foo: string; }) => {
         return () => h('div');
     } });`.replaceAll("\n","").replaceAll(" ",""))
   })

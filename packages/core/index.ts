@@ -13,16 +13,16 @@ export function transform(file: string) {
   type TypeLabel = 'string' | 'number' | 'null' | 'array' | 'object' | 'boolean' | 'function' | 'symbol'
 
   function collectType(type: ts.Type): TypeLabel[] {
-    let flags=type.flags
-    if(flags&ts.TypeFlags.EnumLiteral){
-      flags^=ts.TypeFlags.EnumLiteral
+    let flags = type.flags
+    if (flags & ts.TypeFlags.EnumLiteral) {
+      flags ^= ts.TypeFlags.EnumLiteral
     }
     switch (flags) {
       case ts.TypeFlags.TypeParameter:
-        return (type.symbol.declarations || []).map(item=>{
-          if(ts.isTypeParameterDeclaration(item) && item.constraint){
+        return (type.symbol.declarations || []).map(item => {
+          if (ts.isTypeParameterDeclaration(item) && item.constraint) {
             return collectType(checker.getTypeAtLocation(item.constraint))
-          }else{
+          } else {
             return []
           }
         }).flat(1)
@@ -45,12 +45,12 @@ export function transform(file: string) {
         return ['boolean']
       case ts.TypeFlags.Object:
       case ts.TypeFlags.Intersection:
-        if(checker.isArrayLikeType(type)){
+        if (checker.isArrayLikeType(type)) {
           return ['array']
         }
-        const isFunction=checker.getSignaturesOfType(type,ts.SignatureKind.Call).length||
-          checker.getSignaturesOfType(type,ts.SignatureKind.Construct).length
-        if(isFunction){
+        const isFunction = checker.getSignaturesOfType(type, ts.SignatureKind.Call).length ||
+          checker.getSignaturesOfType(type, ts.SignatureKind.Construct).length
+        if (isFunction) {
           return ['function']
         }
         return ['object']
@@ -73,7 +73,7 @@ export function transform(file: string) {
         return 'null'
       }
     }
-    if(strArr.length==0){
+    if (strArr.length == 0) {
       return 'null'
     }
     if (strArr.length == 1) {
@@ -82,18 +82,18 @@ export function transform(file: string) {
     return Array.from(new Set(strArr))
   }
 
-  function createPropertyType(propertySymbol: ts.Symbol): ts.Expression {
-    const type = checker.getTypeOfSymbol(propertySymbol)
-    const typeLabels=unique(collectType(type))
-    if(typeof typeLabels=='string'){
+  function createPropertyType(typeLabels: TypeLabel | TypeLabel[]): ts.Expression {
+    // const type = checker.getTypeOfSymbol(propertySymbol)
+    // const typeLabels = unique(collectType(type))
+    if (typeof typeLabels == 'string') {
       return createTypeIdentifier(typeLabels)
-    }else{
-      return ts.factory.createArrayLiteralExpression(typeLabels.map(label=>createTypeIdentifier(label)), false)
+    } else {
+      return ts.factory.createArrayLiteralExpression(typeLabels.map(label => createTypeIdentifier(label)), false)
     }
   }
 
   function createTypeIdentifier(label: TypeLabel) {
-    switch (label){
+    switch (label) {
       case "string":
         return ts.factory.createIdentifier("String")
       case "number":
@@ -113,29 +113,28 @@ export function transform(file: string) {
     }
   }
 
-  function createPropertyAssignment(propertySymbol: ts.Symbol): ts.ObjectLiteralElementLike {
-    const isOptional = ((propertySymbol.flags & ts.SymbolFlags.Optional) != 0)
-    const name = propertySymbol.name
+  function createPropertyAssignment(name: string, typeLabels: TypeLabel[], isOptional: boolean): ts.ObjectLiteralElementLike {
+
     return ts.factory.createPropertyAssignment(
       ts.factory.createIdentifier(name),
       ts.factory.createObjectLiteralExpression(
         [
           ts.factory.createPropertyAssignment(
             ts.factory.createIdentifier("type"),
-            createPropertyType(propertySymbol)
+            createPropertyType(unique(typeLabels))
           ),
           ts.factory.createPropertyAssignment(
             ts.factory.createIdentifier("required"),
-            isOptional?ts.factory.createFalse():ts.factory.createTrue()
+            isOptional ? ts.factory.createFalse() : ts.factory.createTrue()
           )
         ]
       )
     )
   }
 
-  function updateProps(component:ts.ArrowFunction|ts.FunctionExpression){
-    const [props,...ctx]=component.parameters
-    if(ts.isArrowFunction(component)){
+  function updateProps(component: ts.ArrowFunction | ts.FunctionExpression, type: ts.TypeNode) {
+    const [props, ...ctx] = component.parameters
+    if (ts.isArrowFunction(component)) {
       return ts.factory.updateArrowFunction(
         component,
         component.modifiers,
@@ -147,7 +146,7 @@ export function transform(file: string) {
             props.dotDotDotToken,
             props.name,
             props.questionToken,
-            undefined,
+            type,
             props.initializer
           ),
           ...ctx,
@@ -156,7 +155,7 @@ export function transform(file: string) {
         component.equalsGreaterThanToken,
         component.body
       )
-    }else{
+    } else {
       return ts.factory.updateFunctionExpression(
         component,
         component.modifiers,
@@ -170,7 +169,7 @@ export function transform(file: string) {
             props.dotDotDotToken,
             props.name,
             props.questionToken,
-            undefined,
+            type,
             props.initializer
           ),
           ...ctx,
@@ -187,20 +186,47 @@ export function transform(file: string) {
       const identifier = node.getChildAt(0) as ts.Identifier
       if (ts.isFunctionLike(component) && component.parameters.length) {
         const propsParameter = component.parameters[0]
-        const propsIdentifier= propsParameter.getChildAt(0) as ts.Identifier
+        const propsIdentifier = propsParameter.getChildAt(0) as ts.Identifier
+        const baseType = propsParameter.getChildAt(2) as ts.TypeNode
         const type = checker.getTypeAtLocation(propsParameter)
         const properties = type.getProperties()
-        const props: ts.ObjectLiteralElementLike[] = []
+
+        const props: Record<string, [type: TypeLabel[], optional: boolean]> = {}
         for (const property of properties) {
-          props.push(createPropertyAssignment(property))
+          props[property.name] = [
+            collectType(checker.getTypeOfSymbol(property)),
+            ((property.flags & ts.SymbolFlags.Optional) != 0)
+          ]
+        }
+        if (type.isUnion()) {
+          type.types.forEach(item => {
+            for (const property of item.getProperties()) {
+              if (!props[property.name]) {
+                props[property.name] = [
+                  collectType(checker.getTypeOfSymbol(property)),
+                  true
+                ]
+              } else {
+                props[property.name][0] = props[property.name][0].concat(collectType(checker.getTypeOfSymbol(property)))
+              }
+            }
+          })
         }
         const options = ts.factory.createObjectLiteralExpression(
           [ts.factory.createPropertyAssignment(
             propsIdentifier,
-            ts.factory.createObjectLiteralExpression(props)
+            ts.factory.createAsExpression(
+              ts.factory.createObjectLiteralExpression(
+                Object.entries(props).map(([key, value]) => {
+                  return createPropertyAssignment(key, ...value)
+                })
+              ),
+              ts.factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword)
+            )
+
           ), ts.factory.createPropertyAssignment(
             ts.factory.createIdentifier('setup'),
-            updateProps(component)
+            updateProps(component, baseType)
           )]
         )
         return ts.factory.updateCallExpression(node, identifier, undefined, [options])
@@ -211,14 +237,14 @@ export function transform(file: string) {
 
   if (source) {
     const { transformed } = ts.transform<ts.Node>(source, [
-      (context)=>{
-        function visit(node: ts.Node):ts.Node {
+      (context) => {
+        function visit(node: ts.Node): ts.Node {
           if (ts.isCallExpression(node) && isDefineComponentNode(node)) {
             return buildDefineComponentNode(node, checker)
           }
           return ts.visitEachChild(node, visit, context)
         }
-        return (node)=>{
+        return (node) => {
           return ts.visitNode(node, visit)
         }
       }
