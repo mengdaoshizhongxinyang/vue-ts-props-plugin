@@ -25,8 +25,7 @@ Install
 yarn install vue-ts-props-plugin-vite
 ```
 
-Usage
------
+## Usage
 
 ```typescript
 //vite
@@ -36,5 +35,19 @@ export default defineConfig({
   plugins:[VueTSPropsPlugin()]
 }) 
 ```
+
+## Q & A
+
+> How to get a better development experience?
+
+* [Overload defineComponent function](./docs/GetBetterType.md).
+
+> How to define emit or slots?
+
+* [It is basically the same as the usage in the documentation.](./docs/EmitOrSlot.md)
+
+> How to support expose type?
+
+* [demo](./docs/Expose.md)
 
 [License](https://github.com/mengdaoshizhongxinyang/vue-ts-props-plugin/blob/main/LICENSE)
