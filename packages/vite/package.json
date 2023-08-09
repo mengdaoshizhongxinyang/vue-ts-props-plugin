@@ -1,9 +1,9 @@
 {
   "name": "vue-ts-props-plugin-vite",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Vue plugin to auto infer runtime props options from type. ",
   "main": "./dist/index.js",
-  "module": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "files": [
     "dist"
